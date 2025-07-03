@@ -1,0 +1,6 @@
+{
+    "Problem Id": "2087A",
+    "Tutorial": "There are many different approaches to this problem. I will describe one of them. We can print a digits, then b uppercase letters, then c lowercase letters, and in each category, we will choose two characters which will be alternating. For example, we can use 0 and 1 as alternating digits, A and B as alternating uppercase letters, a and b as alternating lowercase letters. When printing the j-th character of a certain type, we can use j mod 2 to determine whether we will use the first option or the second option.",
+    "Solution/Code":"const val chars = \"01ABab\"\n\nfun main() = repeat(readln().toInt()) {\n  val a = readln().split(\" \").map { it.toInt() }\n  println(a.mapIndexed { i, x -> \n    CharArray (x) { j -> chars[i * 2 + j % 2] }\n  }.flatMap { it.asIterable() }.joinToString(\"\"))\n}"
+
+}

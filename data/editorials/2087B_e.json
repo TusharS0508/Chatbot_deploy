@@ -1,0 +1,6 @@
+{
+    "Problem Id": "2087B",
+    "Tutorial": "Two participants can only be the best opponents for each other if there is no third participant whose rating is strictly between the ratings of these two participants. This means that in sorted order, only pairs of adjacent elements can be the best opponents. Therefore, let's first sort the sequence a. The sorted sequence can only be divided into pairs of adjacent elements in one way: the first element is paired with the second, the third with the fourth, and so on. Thus, we need to check whether such a division is valid. For each pair of participants that are adjacent but do not belong to the same pair in the division (a2 and a3, a4 and a5, and so on), we need to check whether this pair makes the pairs in the division invalid. If |a3−a2|<|a2−a1|, then participant 1 is not the best opponent for participant 2. Similarly, if |a3−a2|<|a4−a3|, then participant 4 is not the best opponent for participant 3. Such checks can be made for all subsequent pairs as well.",
+    "Solution/Code":"fun main() = repeat(readln().toInt()) {\n  val n = readln().toInt() * 2\n  val a = readln().split(\" \").map { it.toInt() }.sorted()\n  println(if ((1 until n - 1 step 2).any { i ->\n    a[i + 1] - a[i] < maxOf(a[i] - a[i - 1], a[i + 2] - a[i + 1])\n  }) \"NO\" else \"YES\")\n}"
+
+}
