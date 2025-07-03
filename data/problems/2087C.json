@@ -1,0 +1,9 @@
+{
+    "problem_id": "2087C",
+    "title": "C. Coin Game",
+    "time_limit": "2 seconds",
+    "memory_limit": "512 megabytes",
+    "statement": "There are some coins arranged in a line, numbered from 11 from left to right. There are three types of coins: gold, silver, and bronze. Two players play a game; players take turns, and the first player makes the first turn. In one turn, the player chooses one of the three types of coins, and then collects all coins of that type which are still not taken by the other player. The game continues until all the coins are collected. Both players play optimally, and each player wants to maximize the number of coins he/she gets. Your task is to answer qq independent queries of the following form: how many coins can the first player collect if the game is played using only coins with indices from ll to rr inclusive.",
+    "input_spec": "The first line contains a string ss (1≤|s|≤1051≤|s|≤105), consisting of the characters G, S, and/or B. G means that the coin is gold. S means that the coin is silver. B means that the coin is bronze. The second line contains a single integer qq (1≤q≤1051≤q≤105) — the number of queries. Then qq lines follow; each of them contains two integers ll and rr (1≤l≤r≤|s|1≤l≤r≤|s|).",
+    "output_spec": "For each query, print a single integer — the number of coins the first player can collect if the game is played using only coins with indices from ll to rr inclusive."
+}
