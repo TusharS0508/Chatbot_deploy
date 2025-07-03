@@ -8,3 +8,4 @@ sentence-transformers==2.2.2
 faiss-cpu==1.7.4
 python-multipart==0.0.6
 nltk==3.8.1
+python-dotenv==1.0.0
