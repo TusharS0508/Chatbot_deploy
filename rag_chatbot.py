@@ -13,7 +13,7 @@ class Chatbot(ProblemChatbot):
     def __init__(self, api_key = None):
         super().__init__()
         if api_key:
-            self.model = HuggingFaceModelProcessor(api_key)
+            self.model = HuggingFaceModelProcessor(api_key = api_key)
             
         self.problem_ids = []
         self.problem_data_map = {}
@@ -93,6 +93,8 @@ class Chatbot(ProblemChatbot):
             return []
 
     def respond(self, user_input):
+        if not self.model.api_key or self.model.api_key == "dummy_key":
+            return "⚠️ Please enter a valid Hugging Face API key to continue."
         user_input = user_input.strip()
         
         if any(greet in user_input.lower() for greet in ["hi", "hello", "hey"]):
