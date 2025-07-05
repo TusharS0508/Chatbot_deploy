@@ -1,19 +1,27 @@
 import streamlit as st
 from rag_chatbot import Chatbot
 
+def is_valid_api_key(api_key):
+    """Test if the key works with a lightweight Hugging Face API call."""
+    try:
+        test_url = "https://huggingface.co/api/whoami-v2"
+        response = requests.get(
+            test_url,
+            headers={"Authorization": f"Bearer {api_key}"}
+        )
+        return response.status_code == 200
+    except:
+        return False
+
+
 def main():
     st.title("Competitive Programming Assistant")
     
-    # Add API key input (sidebar or main area)
-    api_key = st.text_input(
-        "Enter your Hugging Face API Key",
-        type="password",  # Mask the key
-        help="Get your key from https://huggingface.co/settings/tokens"
-    )
-    
-    if not api_key:
-        st.warning("Please enter your API key to continue.")
-        return  # Stop execution if no key
+    api_key = st.text_input("Enter Hugging Face API Key", type="password")
+    if api_key and not is_valid_api_key(api_key):
+        st.error("Invalid API key. Please check and try again.")
+        st.stop()
+
     bot = Chatbot(api_key=api_key)  # Update Chatbot class to accept this
 
     if "messages" not in st.session_state:
