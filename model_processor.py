@@ -5,10 +5,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class HuggingFaceModelProcessor:
-    def __init__(self):
-        self.api_url = "https://router.huggingface.co/fireworks-ai/inference/v1/chat/completions"
+    def __init__(self, api_key=None):
+        self.api_key = api_key or os.getenv("HF_API_KEY")
+        if not self.api_key:
+            raise ValueError(
+                "API key not found. Provide it via .env or the chatbot interface."
+            )
         self.headers = {
-            "Authorization": f"Bearer {os.getenv('HUGGINGFACE_API_KEY')}",
+            "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
         self.model_name = "accounts/fireworks/models/llama-v3p1-8b-instruct"
