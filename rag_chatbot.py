@@ -1,4 +1,6 @@
 import os
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+
 import faiss
 import numpy as np
 import torch
@@ -8,17 +10,16 @@ from json_loader import load_problem
 
 class Chatbot(ProblemChatbot):
     def __init__(self):
-        super().__init__()  # Inherits HuggingFaceModelProcessor with .env API key
+        super().__init__()
         
-        # RAG components
         self.problem_ids = []
         self.problem_data_map = {}
         self.retrieval_tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
         self.retrieval_model = AutoModel.from_pretrained("bert-base-uncased")
         self.retrieval_model.eval()
-        self.index = faiss.IndexFlatIP(768)  # BERT embedding dimension
-        
-        # Initialize knowledge base
+
+        self.index = faiss.IndexFlatIP(768) 
+
         self._build_knowledge_base()
 
     def _get_bert_embedding(self, text):
@@ -32,10 +33,10 @@ class Chatbot(ProblemChatbot):
         )
         with torch.no_grad():
             outputs = self.retrieval_model(**inputs)
+        
         return outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
 
     def _create_problem_context(self, problem_data):
-        """Format problem data for embedding"""
         return (
             f"Title: {problem_data.get('title', '')}\n"
             f"Statement: {problem_data.get('statement', '')}\n"
@@ -45,7 +46,6 @@ class Chatbot(ProblemChatbot):
         )
 
     def _build_knowledge_base(self):
-        """Load problems and build FAISS index"""
         print("Building knowledge base...")
         embeddings = []
         
@@ -69,16 +69,15 @@ class Chatbot(ProblemChatbot):
         print(f"Knowledge base built with {len(self.problem_ids)} problems")
 
     def _retrieve_relevant_info(self, query, top_k=3):
-        """Retrieve similar problems using FAISS"""
         try:
             query_embedding = self._get_bert_embedding(query)
             query_embedding = np.expand_dims(query_embedding, axis=0)
-            
+
             distances, indices = self.index.search(query_embedding, top_k)
             
             results = []
             for idx, score in zip(indices[0], distances[0]):
-                if idx >= 0:  # Valid index
+                if idx >= 0:  
                     problem_id = self.problem_ids[idx]
                     results.append((
                         problem_id,
@@ -91,14 +90,13 @@ class Chatbot(ProblemChatbot):
             return []
 
     def respond(self, user_input):
-        """Generate response using RAG and Hugging Face API"""
         user_input = user_input.strip()
         
-        # Handle greetings
         if any(greet in user_input.lower() for greet in ["hi", "hello", "hey"]):
             return super().respond(user_input)
             
-        # Retrieve relevant problems
+        problem_id = self._extract_problem_id(user_input)
+
         retrieved = self._retrieve_relevant_info(user_input)
         rag_context = "\n".join(
             f"Relevant Problem {pid} (score: {score:.2f}):\n"
@@ -106,12 +104,10 @@ class Chatbot(ProblemChatbot):
             for pid, score, data in retrieved
         )
 
-        # Add current problem context if available
         current_context = ""
         if self.current_problem and self.problem_data:
-            current_context = f"\nCurrent Problem Context:\n{super()._build_context()}"
+            current_context = f"\nCurrent Problem Context:\n{self._build_context()}"
 
-        # Generate response
         prompt = (
             f"You are a competitive programming assistant. Use the following relevant problems "
             f"and current problem context to answer the question.\n\n"
