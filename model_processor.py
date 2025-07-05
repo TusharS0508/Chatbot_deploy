@@ -6,11 +6,13 @@ load_dotenv()
 
 class HuggingFaceModelProcessor:
     def __init__(self, api_key=None):
-        self.api_key = api_key or os.getenv("HF_API_KEY")
+        self.api_key = api_key  # Prioritize user-provided key
         if not self.api_key:
-            raise ValueError(
-                "API key not found. Provide it via .env or the chatbot interface."
-            )
+            self.api_key = os.getenv("HF_API_KEY") 
+        
+        if not self.api_key:
+            self.api_key = "dummy_key"  # Placeholder (will fail on API call)
+        
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
