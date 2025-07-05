@@ -20,10 +20,10 @@ class HuggingFaceModelProcessor:
         print(f"API Key (truncated): {self.api_key[:4]}...")  # Debug: Check if key is passed
         try:
             response = requests.post(
-            self.api_url,
-            headers={"Authorization": f"Bearer {self.api_key}"},
-            json={"messages": messages, "model": self.model_name},
-            timeout=10  # Add timeout
+                self.api_url,
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                json={"messages": messages, "model": self.model_name},
+                timeout=10
             )
             response = requests.post(
             response.raise_for_status()
