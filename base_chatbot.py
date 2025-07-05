@@ -1,7 +1,8 @@
 import re
 from json_loader import load_problem
 from model_processor import HuggingFaceModelProcessor 
-PROBLEM_PATH = "data/problems" 
+
+PROBLEM_PATH = "data/problems"
 EDITORIAL_PATH = "data/editorials"
 
 class ProblemChatbot:
