@@ -15,6 +15,24 @@ class HuggingFaceModelProcessor:
         }
         self.model_name = "accounts/fireworks/models/llama-v3p1-8b-instruct"
 
+
+    def query_huggingface(self, messages):
+        print(f"API Key (truncated): {self.api_key[:4]}...")  # Debug: Check if key is passed
+        try:
+            response = requests.post(
+            self.api_url,
+            headers={"Authorization": f"Bearer {self.api_key}"},
+            json={"messages": messages, "model": self.model_name},
+            timeout=10  # Add timeout
+        )
+            response = requests.post(
+            response.raise_for_status()
+            return response.json()
+
+        except Exception as e:
+            print(f"API Call Failed: {str(e)}")  # Debug: Log full error
+            return {"error": str(e)}
+
     def query_huggingface(self, messages):
         """Call Hugging Face Inference API for Llama 3.1 8B Instruct"""
         payload = {
