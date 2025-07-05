@@ -24,7 +24,7 @@ class HuggingFaceModelProcessor:
             headers={"Authorization": f"Bearer {self.api_key}"},
             json={"messages": messages, "model": self.model_name},
             timeout=10  # Add timeout
-        )
+            )
             response = requests.post(
             response.raise_for_status()
             return response.json()
