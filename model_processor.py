@@ -7,7 +7,7 @@ load_dotenv()
 class HuggingFaceModelProcessor:
     def __init__(self, api_key=None):
         self.api_key = api_key or os.getenv("HE_API_KEY")
-        print(f"API Key Status: {'Provided' if self.api_key else 'Missing'}"
+        print(f"API Key Status: {'Provided' if self.api_key else 'Missing'}")
         
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
