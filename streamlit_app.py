@@ -18,6 +18,7 @@ def main():
     st.title("Competitive Programming Assistant")
     
     api_key = st.text_input("Enter Hugging Face API Key", type="password")
+    api_key = api_key.strip()
     if api_key and not is_valid_api_key(api_key):
         st.error("Invalid API key. Please check and try again.")
         st.stop()
