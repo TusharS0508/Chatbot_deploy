@@ -6,12 +6,15 @@ import numpy as np
 import torch
 from transformers import AutoModel, AutoTokenizer
 from base_chatbot import ProblemChatbot, PROBLEM_PATH, EDITORIAL_PATH
+from model_processor import HuggingFaceModelProcessor
 from json_loader import load_problem
 
 class Chatbot(ProblemChatbot):
-    def __init__(self):
+    def __init__(self, api_key = None):
         super().__init__()
-        
+        if api_key:
+            self.model = HuggingFaceModelProcessor(api_key)
+            
         self.problem_ids = []
         self.problem_data_map = {}
         self.retrieval_tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
