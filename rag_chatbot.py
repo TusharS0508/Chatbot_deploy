@@ -89,22 +89,16 @@ class Chatbot(ProblemChatbot):
             print(f"Retrieval error: {str(e)}")
             return []
 
-    def _build_system_message(self):
-        """Extend system message with RAG capabilities description"""
-        base_message = super()._build_system_message()
-        return base_message + (
-            " You have access to a knowledge base of similar programming problems. "
-            "Use this information to provide better answers when relevant."
-        )
-
     def respond(self, user_input):
         user_input = user_input.strip()
         
         parent_response = super().respond(user_input)
+        
         if any(greet in user_input.lower() for greet in ["hi", "hello", "hey"]) or not self.current_problem:
             return parent_response
-            
+        
         retrieved = self._retrieve_relevant_info(user_input)
+        
         rag_context = "\n".join(
             f"Relevant Problem {pid} (score: {score:.2f}):\n"
             f"{self._create_problem_context(data)}"
@@ -113,9 +107,9 @@ class Chatbot(ProblemChatbot):
 
         current_context = ""
         if self.current_problem and self.problem_data:
-            current_context = f"\nCurrent Problem Context:\n{self._build_context()}"
+            current_context = f"\nCurrent Problem Context:\n{super()._build_context()}"
 
-        prompt = (
+        final_prompt = (
             f"User question: {user_input}\n\n"
             f"Retrieved relevant information:\n{rag_context}\n"
             f"{current_context}\n\n"
@@ -124,15 +118,11 @@ class Chatbot(ProblemChatbot):
             f"2. References relevant information from similar problems when helpful\n"
             f"3. Maintains focus on competitive programming best practices"
         )
+
         response = self.model.generate_response(
-            prompt=prompt,
+            prompt=final_prompt,
             conversation_history=self.conversation_history,
             system_message=self._build_system_message()
         )
-        self.conversation_history[-1]["content"] = user_input  # Update last user message
-        self.conversation_history.append({
-            "role": "assistant",
-            "content": response
-        })
         
         return response

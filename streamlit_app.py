@@ -1,6 +1,5 @@
 import streamlit as st
 from rag_chatbot import Chatbot
-from model_processor import HuggingFaceModelProcessor
 
 def main():
     st.title("Competitive Programming Assistant")
@@ -28,7 +27,11 @@ def main():
         else:
             st.sidebar.success("Using provided API key")
 
-    bot = st.cache_resource(lambda: Chatbot(api_key=api_key))()
+    @st.cache_resource
+    def load_chatbot(api_key):
+        return Chatbot(api_key=api_key)
+    
+    bot = load_chatbot(api_key)
 
     for message in st.session_state.messages:
         if message["role"] != "system":
@@ -42,12 +45,7 @@ def main():
 
         with st.spinner("Thinking..."):
             try:
-                conversation_history = [msg for msg in st.session_state.messages if msg["role"] in ["user", "assistant"]]
-                response = bot.respond(
-                    prompt,
-                    conversation_history=conversation_history,
-                    system_message="You are a competitive programming assistant."
-                )
+                response = bot.respond(prompt)
             except Exception as e:
                 response = f"Error: {str(e)}"
 
