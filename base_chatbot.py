@@ -9,6 +9,7 @@ class ProblemChatbot:
         self.model = HuggingFaceModelProcessor()  
         self.current_problem = None
         self.problem_data = None
+        self.conversation_history = []
 
     def _extract_problem_id(self, text):
         """Extract problem ID with flexible formatting"""
@@ -36,48 +37,88 @@ class ProblemChatbot:
             f"Solution Approach: {self.problem_data.get('solution', 'None provided')}"
         )
     
+    def _build_system_message(self):
+        """Create system message based on current state"""
+        base_message = "You are a competitive programming assistant. "
+        if self.current_problem and self.problem_data:
+            return base_message + (
+                f"Currently discussing problem {self.current_problem}. "
+                f"Refer to the problem details when answering questions."
+            )
+        return base_message + "Ask the user to specify a problem ID to begin."
+
     def respond(self, user_input):
-        """Handle user input with hybrid approach"""
+        """Handle user input with proper chat completion format"""
         user_input = user_input.strip()
 
+        self.conversation_history.append({
+            "role": "user",
+            "content": user_input
+        })
         if any(greet in user_input.lower() for greet in ["hi", "hello", "hey"]):
-            return "Hello! I'm your competitive programming assistant. Please provide a problem ID (e.g., 2093I) to get started."
+            response = "Hello! I'm your competitive programming assistant. Please provide a problem ID (e.g., 2093I) to get started."
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": response
+            })
+            return response
 
+        # Handle problem ID specification
         problem_id = self._extract_problem_id(user_input)
         if problem_id:
             try:
                 self.current_problem = problem_id
                 self.problem_data = self._load_problem(problem_id)
-                return f"Loaded problem {problem_id}. You can ask about:\n- The problem statement\n- Input/output specifications\n- Solution approach"
+                response = f"Loaded problem {problem_id}. You can ask about:\n- The problem statement\n- Input/output specifications\n- Solution approach"
+                self.conversation_history.append({
+                    "role": "assistant",
+                    "content": response
+                })
+                return response
             except ValueError as e:
+                self.conversation_history.append({
+                    "role": "assistant",
+                    "content": str(e)
+                })
                 return str(e)
         
         if not self.current_problem:
-            return "Please first specify a problem ID (e.g., 2093I)."
+            response = "Please first specify a problem ID (e.g., 2093I)."
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": response
+            })
+            return response
         
         context = self._build_context()
+        prompt = user_input
         
         if "hint" in user_input.lower():
             prompt = (
-                f"You are a competitive programming assistant. Provide a helpful hint for problem {self.current_problem} "
+                f"Provide a helpful hint for problem {self.current_problem} "
                 f"without giving away the full solution. Problem details:\n{context}"
             )
         elif "solution" in user_input.lower() or "solve" in user_input.lower():
             prompt = (
-                f"You are a competitive programming assistant. Explain the solution approach for problem {self.current_problem} "
+                f"Explain the solution approach for problem {self.current_problem} "
                 f"in a step-by-step manner. Include any important insights or algorithms needed. "
                 f"Problem details:\n{context}"
             )
         elif "explain" in user_input.lower() or "how" in user_input.lower():
             prompt = (
-                f"You are a competitive programming assistant. Explain how to approach solving problem {self.current_problem} "
+                f"Explain how to approach solving problem {self.current_problem} "
                 f"in simple terms suitable for a beginner. Problem details:\n{context}"
             )
-        else:
-            
-            prompt = (
-                f"You are a competitive programming assistant. Answer this question about problem {self.current_problem}: "
-                f"{user_input}\n\nProblem details:\n{context}"
-            )
+
+        response = self.model.generate_response(
+            prompt=prompt,
+            conversation_history=self.conversation_history,
+            system_message=self._build_system_message()
+        )
+    
+        self.conversation_history.append({
+            "role": "assistant",
+            "content": response
+        })
         
-        return self.model.generate_response(prompt)
+        return response

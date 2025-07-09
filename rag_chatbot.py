@@ -12,7 +12,7 @@ from model_processor import HuggingFaceModelProcessor
 class Chatbot(ProblemChatbot):
     def __init__(self, api_key=None):
         super().__init__()
-        self.model = HuggingFaceModelProcessor(api_key=api_key)  # Initialize with API key
+        self.model = HuggingFaceModelProcessor(api_key=api_key)
         
         self.problem_ids = []
         self.problem_data_map = {}
@@ -21,7 +21,6 @@ class Chatbot(ProblemChatbot):
         self.retrieval_model.eval()
 
         self.index = faiss.IndexFlatIP(768) 
-
         self._build_knowledge_base()
         
     def _get_bert_embedding(self, text):
@@ -35,7 +34,6 @@ class Chatbot(ProblemChatbot):
         )
         with torch.no_grad():
             outputs = self.retrieval_model(**inputs)
-        
         return outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
 
     def _create_problem_context(self, problem_data):
@@ -91,14 +89,21 @@ class Chatbot(ProblemChatbot):
             print(f"Retrieval error: {str(e)}")
             return []
 
+    def _build_system_message(self):
+        """Extend system message with RAG capabilities description"""
+        base_message = super()._build_system_message()
+        return base_message + (
+            " You have access to a knowledge base of similar programming problems. "
+            "Use this information to provide better answers when relevant."
+        )
+
     def respond(self, user_input):
         user_input = user_input.strip()
         
-        if any(greet in user_input.lower() for greet in ["hi", "hello", "hey"]):
-            return super().respond(user_input)
+        parent_response = super().respond(user_input)
+        if any(greet in user_input.lower() for greet in ["hi", "hello", "hey"]) or not self.current_problem:
+            return parent_response
             
-        problem_id = self._extract_problem_id(user_input)
-
         retrieved = self._retrieve_relevant_info(user_input)
         rag_context = "\n".join(
             f"Relevant Problem {pid} (score: {score:.2f}):\n"
@@ -111,16 +116,23 @@ class Chatbot(ProblemChatbot):
             current_context = f"\nCurrent Problem Context:\n{self._build_context()}"
 
         prompt = (
-            f"You are a competitive programming assistant. Use the following relevant problems "
-            f"and current problem context to answer the question.\n\n"
-            f"Retrieved relevant information:\n{rag_context}\n"
-            f"{current_context}\n"
             f"User question: {user_input}\n\n"
-            f"Provide a detailed, accurate response that:\n"
+            f"Retrieved relevant information:\n{rag_context}\n"
+            f"{current_context}\n\n"
+            f"Provide a detailed response that:\n"
             f"1. Directly addresses the user's question\n"
             f"2. References relevant information from similar problems when helpful\n"
-            f"3. Maintains focus on competitive programming best practices\n"
-            f"4. Provides clear explanations and examples when appropriate"
+            f"3. Maintains focus on competitive programming best practices"
         )
+        response = self.model.generate_response(
+            prompt=prompt,
+            conversation_history=self.conversation_history,
+            system_message=self._build_system_message()
+        )
+        self.conversation_history[-1]["content"] = user_input  # Update last user message
+        self.conversation_history.append({
+            "role": "assistant",
+            "content": response
+        })
         
-        return self.model.generate_response(prompt)
+        return response
