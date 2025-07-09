@@ -6,18 +6,15 @@ def main():
     st.title("Competitive Programming Assistant")
     st.write("Ask questions about programming problems or provide a problem ID (e.g., 2093I) to get started.")
     
-    # Initialize API key variable
     api_key = None
     
-    # Try to get API key from secrets if available
     try:
         if hasattr(st, 'secrets') and 'HF_TOKEN' in st.secrets:
             api_key = st.secrets.HF_TOKEN
             st.sidebar.success("Using API key from secrets")
     except Exception:
-        pass  # Silently ignore if secrets aren't available
+        pass
     
-    # If no API key from secrets, show input field
     if not api_key:
         api_key = st.sidebar.text_input(
             "Enter your Hugging Face API key:",
@@ -33,22 +30,22 @@ def main():
 
     @st.cache_resource
     def load_chatbot(api_key):
-        # Create model processor with the API key
-        model_processor = HuggingFaceModelProcessor(api_key=api_key)
-        # Initialize chatbot with the model processor
-        chatbot = Chatbot()
-        chatbot.model = model_processor
+        chatbot = Chatbot(api_key=api_key)
         return chatbot
     
-    # Initialize chatbot with the API key
     bot = load_chatbot(api_key)
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
+        st.session_state.messages.append({
+            "role": "system",
+            "content": "You are a helpful competitive programming assistant."
+        })
 
     for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+        if message["role"] != "system":  
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
     
     if prompt := st.chat_input("Type your question here..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
@@ -56,12 +53,18 @@ def main():
             st.markdown(prompt)
     
         with st.spinner("Thinking..."):
-            response = bot.respond(prompt)
+            conversation_history = [
+                msg for msg in st.session_state.messages 
+                if msg["role"] in ["user", "assistant"]
+            ]
+            
+            response = bot.respond(
+                prompt,
+                conversation_history=conversation_history,
+                system_message="You are a competitive programming assistant."
+            )
     
         with st.chat_message("assistant"):
             st.markdown(response)
         
         st.session_state.messages.append({"role": "assistant", "content": response})
-
-if __name__ == "__main__":
-    main()
